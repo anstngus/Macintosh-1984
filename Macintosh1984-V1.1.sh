@@ -1,20 +1,30 @@
 setopt NO_BANG_HIST
-cat << 'PYEOF' > /tmp/build_macintosh1984.py
+cat << 'PYEOF' > /tmp/build_macintosh_1984_v13.py
 import os, shutil, subprocess, plistlib
 
 desktop = os.path.expanduser("~/Desktop")
-stage_dir = os.path.join(desktop, "Macintosh1984_Stage")
-app_path = os.path.join(stage_dir, "Macintosh1984.app")
-dmg_path = os.path.join(desktop, "Macintosh1984.dmg")
-installed_app = "/Applications/Macintosh1984.app"
+stage_dir = os.path.join(desktop, "Macintosh_1984_Stage")
+app_name = "Macintosh 1984.app"
+app_path = os.path.join(stage_dir, app_name)
+dmg_path = os.path.join(desktop, "Macintosh 1984.dmg")
+installed_app = os.path.join("/Applications", app_name)
 
+# 1. 기존 실행 프로세스 종료 및 이전 파일 정리
 subprocess.run(["pkill", "-9", "-f", "Macintosh1984"], check=False)
-for p in [stage_dir, dmg_path]:
-    if os.path.exists(p):
-        if os.path.isdir(p) and not os.path.islink(p):
-            shutil.rmtree(p)
+subprocess.run(["pkill", "-9", "-f", "Macintosh 1984"], check=False)
+
+for old_p in [
+    stage_dir,
+    dmg_path,
+    installed_app,
+    "/Applications/Macintosh1984.app",
+    os.path.join(desktop, "Macintosh1984.dmg")
+]:
+    if os.path.exists(old_p):
+        if os.path.isdir(old_p) and not os.path.islink(old_p):
+            shutil.rmtree(old_p)
         else:
-            os.remove(p)
+            os.remove(old_p)
 
 contents_dir = os.path.join(app_path, "Contents")
 macos_dir = os.path.join(contents_dir, "MacOS")
@@ -22,7 +32,7 @@ res_dir = os.path.join(contents_dir, "Resources")
 os.makedirs(macos_dir, exist_ok=True)
 os.makedirs(res_dir, exist_ok=True)
 
-# 1. 1984 System 1.0 UI + 4대 CRT/Braun 테마 + 데스크 액세서리 HTML/CSS/JS 엔진
+# 2. OS X 10.7/10.8 WebKit(Safari 5/6) 100% 호환 CSS (CSS 변수 완전 제거 + 명시적 Hex 컬러 + 깨짐 없는 기호)
 html_content = r'''<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -31,60 +41,12 @@ html_content = r'''<!DOCTYPE html>
 <style>
   * {
     -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     -webkit-user-select: none;
     user-select: none;
-  }
-
-  :root {
-    --fg: #000000;
-    --bg: #ffffff;
-    --desk-a: #888888;
-    --desk-b: #ffffff;
-    --accent: #000000;
-    --win-shadow: #000000;
-  }
-
-  /* Theme 1: 1984 Classic 1-Bit B&W */
-  body.theme-bw {
-    --fg: #111111;
-    --bg: #fbfbf9;
-    --desk-a: #777777;
-    --desk-b: #e5e5e0;
-    --accent: #111111;
-    --win-shadow: #000000;
-  }
-
-  /* Theme 2: 1984 Amber Phosphor CRT */
-  body.theme-amber {
-    --fg: #ffb000;
-    --bg: #181000;
-    --desk-a: #382400;
-    --desk-b: #120b00;
-    --accent: #ffcc33;
-    --win-shadow: #000000;
-  }
-
-  /* Theme 3: Apple II Green Phosphor CRT */
-  body.theme-green {
-    --fg: #33ff66;
-    --bg: #051608;
-    --desk-a: #0f3818;
-    --desk-b: #041006;
-    --accent: #66ff99;
-    --win-shadow: #000000;
-  }
-
-  /* Theme 4: Dieter Rams Braun Industrial */
-  body.theme-braun {
-    --fg: #222220;
-    --bg: #f4f2ec;
-    --desk-a: #d4d0c5;
-    --desk-b: #dfdcd2;
-    --accent: #ea4c1d;
-    --win-shadow: #88847a;
   }
 
   html, body {
@@ -93,30 +55,182 @@ html_content = r'''<!DOCTYPE html>
     overflow: hidden;
     font-family: "Chicago", "Geneva", "Monaco", "Courier New", "Apple SD Gothic Neo", monospace;
     font-size: 13px;
-    color: var(--fg);
-    background-color: var(--desk-a);
-    background-image:
-      -webkit-linear-gradient(45deg, var(--desk-b) 25%, transparent 25%, transparent 75%, var(--desk-b) 75%, var(--desk-b)),
-      -webkit-linear-gradient(45deg, var(--desk-b) 25%, transparent 25%, transparent 75%, var(--desk-b) 75%, var(--desk-b));
-    background-position: 0 0, 2px 2px;
-    background-size: 4px 4px;
   }
 
   input, textarea {
     -webkit-user-select: text;
     user-select: text;
     font-family: inherit;
-    color: var(--fg);
-    background: var(--bg);
   }
 
-  /* 1984 System 1.0 Top Menu Bar */
+  /* ==========================================================================
+     Theme 1: 1984 Classic 1-Bit B&W (OS X 10.7/10.8 Safari 6 Explicit Hex CSS)
+     ========================================================================== */
+  body.theme-bw {
+    color: #111111;
+    background-color: #777777;
+    background-image:
+      -webkit-linear-gradient(45deg, #e5e5e0 25%, transparent 25%, transparent 75%, #e5e5e0 75%, #e5e5e0),
+      -webkit-linear-gradient(45deg, #e5e5e0 25%, transparent 25%, transparent 75%, #e5e5e0 75%, #e5e5e0);
+    background-position: 0 0, 2px 2px;
+    background-size: 4px 4px;
+  }
+  body.theme-bw .mac-menubar { background-color: #fbfbf9; border-bottom: 2px solid #111111; color: #111111; }
+  body.theme-bw .menu-item:hover, body.theme-bw .menu-item.active-menu { background-color: #111111; color: #fbfbf9; }
+  body.theme-bw .mac-window { background-color: #fbfbf9; border: 2px solid #111111; -webkit-box-shadow: 4px 4px 0px #000000; box-shadow: 4px 4px 0px #000000; }
+  body.theme-bw .mac-titlebar {
+    background-color: #fbfbf9;
+    border-bottom: 2px solid #111111;
+    background-image: -webkit-repeating-linear-gradient(top, #fbfbf9 0px, #fbfbf9 2px, #111111 2px, #111111 3px);
+  }
+  body.theme-bw .mac-close-box { background-color: #fbfbf9; border: 1.5px solid #111111; -webkit-box-shadow: 0 0 0 3px #fbfbf9; box-shadow: 0 0 0 3px #fbfbf9; }
+  body.theme-bw .mac-title-text, body.theme-bw input, body.theme-bw textarea, body.theme-bw .notepad-footer, body.theme-bw .dog-ear-btn, body.theme-bw .mac-alert-box {
+    background-color: #fbfbf9; color: #111111;
+  }
+  body.theme-bw .clock-hero, body.theme-bw .dday-box, body.theme-bw .spec-summary-box, body.theme-bw .mac-gauge-track, body.theme-bw .hw-chip, body.theme-bw .pomo-display-wrap, body.theme-bw .pomo-status-tag {
+    background-color: #fbfbf9; border-color: #111111; color: #111111;
+  }
+  body.theme-bw .mac-input { border-bottom-color: #111111; color: #111111; background-color: transparent; }
+  body.theme-bw .dday-badge { background-color: #111111; color: #fbfbf9; }
+  body.theme-bw .mac-gauge-fill {
+    background-color: #111111;
+    background-image: -webkit-repeating-linear-gradient(left, #111111 0px, #111111 4px, #fbfbf9 4px, #fbfbf9 6px);
+  }
+  body.theme-bw .mac-btn {
+    background-color: #fbfbf9; color: #111111; border: 2px solid #111111;
+    -webkit-box-shadow: 2px 2px 0px #111111; box-shadow: 2px 2px 0px #111111;
+  }
+  body.theme-bw .mac-btn:hover, body.theme-bw .dog-ear-btn:hover { background-color: #111111; color: #fbfbf9; }
+  body.theme-bw .mac-btn-default { -webkit-box-shadow: 0 0 0 1px #fbfbf9, 0 0 0 4px #111111; box-shadow: 0 0 0 1px #fbfbf9, 0 0 0 4px #111111; }
+
+  /* ==========================================================================
+     Theme 2: 1984 Amber Phosphor CRT
+     ========================================================================== */
+  body.theme-amber {
+    color: #ffb000;
+    background-color: #382400;
+    background-image:
+      -webkit-linear-gradient(45deg, #120b00 25%, transparent 25%, transparent 75%, #120b00 75%, #120b00),
+      -webkit-linear-gradient(45deg, #120b00 25%, transparent 25%, transparent 75%, #120b00 75%, #120b00);
+    background-position: 0 0, 2px 2px;
+    background-size: 4px 4px;
+  }
+  body.theme-amber .mac-menubar { background-color: #181000; border-bottom: 2px solid #ffb000; color: #ffb000; }
+  body.theme-amber .menu-item:hover, body.theme-amber .menu-item.active-menu { background-color: #ffb000; color: #181000; }
+  body.theme-amber .mac-window { background-color: #181000; border: 2px solid #ffb000; -webkit-box-shadow: 4px 4px 0px #000000; box-shadow: 4px 4px 0px #000000; }
+  body.theme-amber .mac-titlebar {
+    background-color: #181000;
+    border-bottom: 2px solid #ffb000;
+    background-image: -webkit-repeating-linear-gradient(top, #181000 0px, #181000 2px, #ffb000 2px, #ffb000 3px);
+  }
+  body.theme-amber .mac-close-box { background-color: #181000; border: 1.5px solid #ffb000; -webkit-box-shadow: 0 0 0 3px #181000; box-shadow: 0 0 0 3px #181000; }
+  body.theme-amber .mac-title-text, body.theme-amber input, body.theme-amber textarea, body.theme-amber .notepad-footer, body.theme-amber .dog-ear-btn, body.theme-amber .mac-alert-box {
+    background-color: #181000; color: #ffb000;
+  }
+  body.theme-amber .clock-hero, body.theme-amber .dday-box, body.theme-amber .spec-summary-box, body.theme-amber .mac-gauge-track, body.theme-amber .hw-chip, body.theme-amber .pomo-display-wrap, body.theme-amber .pomo-status-tag {
+    background-color: #181000; border-color: #ffb000; color: #ffb000;
+  }
+  body.theme-amber .mac-input { border-bottom-color: #ffb000; color: #ffb000; background-color: transparent; }
+  body.theme-amber .dday-badge { background-color: #ffcc33; color: #181000; }
+  body.theme-amber .mac-gauge-fill {
+    background-color: #ffcc33;
+    background-image: -webkit-repeating-linear-gradient(left, #ffcc33 0px, #ffcc33 4px, #181000 4px, #181000 6px);
+  }
+  body.theme-amber .mac-btn {
+    background-color: #181000; color: #ffb000; border: 2px solid #ffb000;
+    -webkit-box-shadow: 2px 2px 0px #ffb000; box-shadow: 2px 2px 0px #ffb000;
+  }
+  body.theme-amber .mac-btn:hover, body.theme-amber .dog-ear-btn:hover { background-color: #ffb000; color: #181000; }
+  body.theme-amber .mac-btn-default { -webkit-box-shadow: 0 0 0 1px #181000, 0 0 0 4px #ffb000; box-shadow: 0 0 0 1px #181000, 0 0 0 4px #ffb000; }
+
+  /* ==========================================================================
+     Theme 3: Apple II Green Phosphor CRT
+     ========================================================================== */
+  body.theme-green {
+    color: #33ff66;
+    background-color: #0f3818;
+    background-image:
+      -webkit-linear-gradient(45deg, #041006 25%, transparent 25%, transparent 75%, #041006 75%, #041006),
+      -webkit-linear-gradient(45deg, #041006 25%, transparent 25%, transparent 75%, #041006 75%, #041006);
+    background-position: 0 0, 2px 2px;
+    background-size: 4px 4px;
+  }
+  body.theme-green .mac-menubar { background-color: #051608; border-bottom: 2px solid #33ff66; color: #33ff66; }
+  body.theme-green .menu-item:hover, body.theme-green .menu-item.active-menu { background-color: #33ff66; color: #051608; }
+  body.theme-green .mac-window { background-color: #051608; border: 2px solid #33ff66; -webkit-box-shadow: 4px 4px 0px #000000; box-shadow: 4px 4px 0px #000000; }
+  body.theme-green .mac-titlebar {
+    background-color: #051608;
+    border-bottom: 2px solid #33ff66;
+    background-image: -webkit-repeating-linear-gradient(top, #051608 0px, #051608 2px, #33ff66 2px, #33ff66 3px);
+  }
+  body.theme-green .mac-close-box { background-color: #051608; border: 1.5px solid #33ff66; -webkit-box-shadow: 0 0 0 3px #051608; box-shadow: 0 0 0 3px #051608; }
+  body.theme-green .mac-title-text, body.theme-green input, body.theme-green textarea, body.theme-green .notepad-footer, body.theme-green .dog-ear-btn, body.theme-green .mac-alert-box {
+    background-color: #051608; color: #33ff66;
+  }
+  body.theme-green .clock-hero, body.theme-green .dday-box, body.theme-green .spec-summary-box, body.theme-green .mac-gauge-track, body.theme-green .hw-chip, body.theme-green .pomo-display-wrap, body.theme-green .pomo-status-tag {
+    background-color: #051608; border-color: #33ff66; color: #33ff66;
+  }
+  body.theme-green .mac-input { border-bottom-color: #33ff66; color: #33ff66; background-color: transparent; }
+  body.theme-green .dday-badge { background-color: #66ff99; color: #051608; }
+  body.theme-green .mac-gauge-fill {
+    background-color: #66ff99;
+    background-image: -webkit-repeating-linear-gradient(left, #66ff99 0px, #66ff99 4px, #051608 4px, #051608 6px);
+  }
+  body.theme-green .mac-btn {
+    background-color: #051608; color: #33ff66; border: 2px solid #33ff66;
+    -webkit-box-shadow: 2px 2px 0px #33ff66; box-shadow: 2px 2px 0px #33ff66;
+  }
+  body.theme-green .mac-btn:hover, body.theme-green .dog-ear-btn:hover { background-color: #33ff66; color: #051608; }
+  body.theme-green .mac-btn-default { -webkit-box-shadow: 0 0 0 1px #051608, 0 0 0 4px #33ff66; box-shadow: 0 0 0 1px #051608, 0 0 0 4px #33ff66; }
+
+  /* ==========================================================================
+     Theme 4: Dieter Rams Braun Industrial
+     ========================================================================== */
+  body.theme-braun {
+    color: #222220;
+    background-color: #d4d0c5;
+    background-image:
+      -webkit-linear-gradient(45deg, #dfdcd2 25%, transparent 25%, transparent 75%, #dfdcd2 75%, #dfdcd2),
+      -webkit-linear-gradient(45deg, #dfdcd2 25%, transparent 25%, transparent 75%, #dfdcd2 75%, #dfdcd2);
+    background-position: 0 0, 2px 2px;
+    background-size: 4px 4px;
+  }
+  body.theme-braun .mac-menubar { background-color: #f4f2ec; border-bottom: 2px solid #222220; color: #222220; }
+  body.theme-braun .menu-item:hover, body.theme-braun .menu-item.active-menu { background-color: #ea4c1d; color: #f4f2ec; }
+  body.theme-braun .mac-window { background-color: #f4f2ec; border: 2px solid #222220; -webkit-box-shadow: 4px 4px 0px #88847a; box-shadow: 4px 4px 0px #88847a; }
+  body.theme-braun .mac-titlebar {
+    background-color: #f4f2ec;
+    border-bottom: 2px solid #222220;
+    background-image: -webkit-repeating-linear-gradient(top, #f4f2ec 0px, #f4f2ec 2px, #222220 2px, #222220 3px);
+  }
+  body.theme-braun .mac-close-box { background-color: #f4f2ec; border: 1.5px solid #222220; -webkit-box-shadow: 0 0 0 3px #f4f2ec; box-shadow: 0 0 0 3px #f4f2ec; }
+  body.theme-braun .mac-title-text, body.theme-braun input, body.theme-braun textarea, body.theme-braun .notepad-footer, body.theme-braun .dog-ear-btn, body.theme-braun .mac-alert-box {
+    background-color: #f4f2ec; color: #222220;
+  }
+  body.theme-braun .clock-hero, body.theme-braun .dday-box, body.theme-braun .spec-summary-box, body.theme-braun .mac-gauge-track, body.theme-braun .hw-chip, body.theme-braun .pomo-display-wrap, body.theme-braun .pomo-status-tag {
+    background-color: #f4f2ec; border-color: #222220; color: #222220;
+  }
+  body.theme-braun .mac-input { border-bottom-color: #222220; color: #222220; background-color: transparent; }
+  body.theme-braun .dday-badge { background-color: #ea4c1d; color: #f4f2ec; }
+  body.theme-braun .clock-ampm { color: #ea4c1d; }
+  body.theme-braun .mac-gauge-fill {
+    background-color: #ea4c1d;
+    background-image: -webkit-repeating-linear-gradient(left, #ea4c1d 0px, #ea4c1d 4px, #f4f2ec 4px, #f4f2ec 6px);
+  }
+  body.theme-braun .mac-btn {
+    background-color: #f4f2ec; color: #222220; border: 2px solid #222220;
+    -webkit-box-shadow: 2px 2px 0px #222220; box-shadow: 2px 2px 0px #222220;
+  }
+  body.theme-braun .mac-btn:hover, body.theme-braun .dog-ear-btn:hover { background-color: #ea4c1d; color: #f4f2ec; border-color: #ea4c1d; }
+  body.theme-braun .mac-btn-default { -webkit-box-shadow: 0 0 0 1px #f4f2ec, 0 0 0 4px #ea4c1d; box-shadow: 0 0 0 1px #f4f2ec, 0 0 0 4px #ea4c1d; }
+
+  /* ==========================================================================
+     Structural Layout (100% OS X 10.7/10.8 WebKit Compatible)
+     ========================================================================== */
   .mac-menubar {
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 28px;
-    background: var(--bg);
-    border-bottom: 2px solid var(--fg);
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
@@ -146,20 +260,15 @@ html_content = r'''<!DOCTYPE html>
     border-radius: 2px;
     font-size: 13px;
   }
-  .menu-item:hover, .menu-item.active-menu {
-    background: var(--fg);
-    color: var(--bg);
-  }
   .menu-apple {
     font-size: 15px;
     padding: 2px 10px;
   }
 
-  /* Desktop Workspace Grid */
   .mac-desktop {
     position: absolute;
     top: 28px; bottom: 0; left: 0; right: 0;
-    padding: 16px;
+    padding: 14px;
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
@@ -175,39 +284,33 @@ html_content = r'''<!DOCTYPE html>
     -webkit-box-flex: 1;
     -webkit-flex: 1;
     flex: 1;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     min-height: 0;
   }
   .desktop-row:last-child {
     margin-bottom: 0;
   }
 
-  /* Classic System 1.0 Window Chrome */
   .mac-window {
-    background: var(--bg);
-    border: 2px solid var(--fg);
-    box-shadow: 4px 4px 0px var(--win-shadow);
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
     -webkit-box-orient: vertical;
     -webkit-flex-direction: column;
     flex-direction: column;
-    margin-right: 16px;
+    margin-right: 14px;
     position: relative;
     overflow: hidden;
   }
   .mac-window:last-child {
     margin-right: 0;
   }
-  .win-flex-6 { -webkit-box-flex: 6; -webkit-flex: 6; flex: 6; }
   .win-flex-5 { -webkit-box-flex: 5; -webkit-flex: 5; flex: 5; }
+  .win-flex-6 { -webkit-box-flex: 6; -webkit-flex: 6; flex: 6; }
 
-  /* Classic 6-Line Pinstripe Title Bar */
   .mac-titlebar {
     height: 26px;
     min-height: 26px;
-    border-bottom: 2px solid var(--fg);
     position: relative;
     display: -webkit-box;
     display: -webkit-flex;
@@ -218,13 +321,7 @@ html_content = r'''<!DOCTYPE html>
     -webkit-box-pack: center;
     -webkit-justify-content: center;
     justify-content: center;
-    background-image: -webkit-repeating-linear-gradient(
-      to bottom,
-      var(--bg) 0px,
-      var(--bg) 2px,
-      var(--fg) 2px,
-      var(--fg) 3px
-    );
+    -webkit-background-size: 100% 18px;
     background-size: 100% 18px;
     background-repeat: no-repeat;
     background-position: center;
@@ -235,17 +332,10 @@ html_content = r'''<!DOCTYPE html>
     left: 8px;
     width: 13px;
     height: 13px;
-    background: var(--bg);
-    border: 1.5px solid var(--fg);
-    box-shadow: 0 0 0 3px var(--bg);
     cursor: pointer;
-  }
-  .mac-close-box:active {
-    background: var(--fg);
   }
 
   .mac-title-text {
-    background: var(--bg);
     padding: 0 10px;
     font-weight: 800;
     font-size: 12.5px;
@@ -257,7 +347,7 @@ html_content = r'''<!DOCTYPE html>
     -webkit-box-flex: 1;
     -webkit-flex: 1;
     flex: 1;
-    padding: 14px 18px;
+    padding: 12px 16px;
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
@@ -270,68 +360,50 @@ html_content = r'''<!DOCTYPE html>
     overflow-y: auto;
   }
 
-  /* Classic 1984 Push Buttons */
   .mac-btn {
-    background: var(--bg);
-    color: var(--fg);
-    border: 2px solid var(--fg);
     border-radius: 5px;
-    padding: 5px 12px;
+    padding: 5px 10px;
     font-family: inherit;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 800;
     cursor: pointer;
-    box-shadow: 2px 2px 0px var(--fg);
     outline: none;
   }
-  .mac-btn:hover {
-    background: var(--fg);
-    color: var(--bg);
-  }
-  .mac-btn:active, .mac-btn.active-btn {
-    background: var(--accent);
-    color: var(--bg);
-    border-color: var(--accent);
-    box-shadow: none;
+  .mac-btn:active {
     -webkit-transform: translate(1px, 1px);
     transform: translate(1px, 1px);
   }
-  .mac-btn-default {
-    box-shadow: 0 0 0 1px var(--bg), 0 0 0 4px var(--fg);
-  }
 
-  /* Window 1: Master Flip Clock & D-Day */
   .clock-hero {
     text-align: center;
     padding: 8px 0;
-    border: 2px solid var(--fg);
-    background: var(--bg);
-    box-shadow: inset 2px 2px 0px rgba(0,0,0,0.12);
+    border-width: 2px;
+    border-style: solid;
   }
   .clock-time {
-    font-size: 56px;
+    font-size: 52px;
     font-weight: 900;
     letter-spacing: 2px;
     line-height: 1.05;
     font-family: "Monaco", "Courier New", monospace;
   }
   .clock-ampm {
-    font-size: 18px;
+    font-size: 17px;
     vertical-align: super;
     margin-left: 4px;
-    color: var(--accent);
   }
   .clock-date {
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 700;
     margin-top: 4px;
     opacity: 0.85;
   }
 
   .dday-box {
-    margin-top: 10px;
-    border: 1.5px solid var(--fg);
-    padding: 10px 12px;
+    margin-top: 8px;
+    border-width: 1.5px;
+    border-style: solid;
+    padding: 8px 12px;
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
@@ -343,13 +415,11 @@ html_content = r'''<!DOCTYPE html>
     justify-content: space-between;
   }
   .dday-badge {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 900;
     padding: 4px 12px;
-    background: var(--accent);
-    color: var(--bg);
     border-radius: 3px;
-    min-width: 96px;
+    min-width: 92px;
     text-align: center;
   }
   .dday-inputs {
@@ -361,20 +431,51 @@ html_content = r'''<!DOCTYPE html>
   .mac-input {
     width: 100%;
     border: none;
-    border-bottom: 1.5px dashed var(--fg);
+    border-bottom-width: 1.5px;
+    border-bottom-style: dashed;
     padding: 2px 4px;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 700;
     outline: none;
     margin-bottom: 4px;
   }
 
-  /* Window 2: Hardware Telemetry Gauges */
-  .telemetry-row {
+  .spec-summary-box {
+    border-width: 1.5px;
+    border-style: solid;
+    padding: 7px 10px;
     margin-bottom: 8px;
+    font-size: 11.5px;
+    line-height: 1.48;
   }
-  .telemetry-row:last-child {
-    margin-bottom: 0;
+  .spec-line {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-pack: justify;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+    border-bottom: 1px dotted rgba(128,128,128,0.45);
+    padding: 1.5px 0;
+  }
+  .spec-line:last-child {
+    border-bottom: none;
+  }
+  .spec-key {
+    font-weight: 900;
+    margin-right: 8px;
+    white-space: nowrap;
+  }
+  .spec-val {
+    font-weight: 700;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .telemetry-row {
+    margin-bottom: 6px;
   }
   .telemetry-label-line {
     display: -webkit-box;
@@ -383,28 +484,20 @@ html_content = r'''<!DOCTYPE html>
     -webkit-box-pack: justify;
     -webkit-justify-content: space-between;
     justify-content: space-between;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 800;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
   }
   .mac-gauge-track {
     width: 100%;
-    height: 15px;
-    border: 1.5px solid var(--fg);
-    padding: 2px;
-    background: var(--bg);
+    height: 12px;
+    border-width: 1.5px;
+    border-style: solid;
+    padding: 1.5px;
   }
   .mac-gauge-fill {
     height: 100%;
     width: 20%;
-    background-color: var(--accent);
-    background-image: -webkit-repeating-linear-gradient(
-      90deg,
-      var(--accent) 0px,
-      var(--accent) 4px,
-      var(--bg) 4px,
-      var(--bg) 6px
-    );
     -webkit-transition: width 0.35s ease;
     transition: width 0.35s ease;
   }
@@ -413,22 +506,22 @@ html_content = r'''<!DOCTYPE html>
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
-    margin-top: 6px;
+    margin-top: 4px;
   }
   .hw-chip {
     -webkit-box-flex: 1;
     -webkit-flex: 1;
     flex: 1;
-    border: 1.5px solid var(--fg);
-    padding: 6px 8px;
-    margin-right: 8px;
+    border-width: 1.5px;
+    border-style: solid;
+    padding: 4px 6px;
+    margin-right: 6px;
     text-align: center;
   }
   .hw-chip:last-child { margin-right: 0; }
-  .hw-chip-val { font-size: 16px; font-weight: 900; }
-  .hw-chip-lbl { font-size: 10px; opacity: 0.8; margin-top: 1px; }
+  .hw-chip-val { font-size: 14px; font-weight: 900; }
+  .hw-chip-lbl { font-size: 9.5px; opacity: 0.8; }
 
-  /* Window 3: Pomodoro Focus Chronometer */
   .pomo-display-wrap {
     display: -webkit-box;
     display: -webkit-flex;
@@ -439,7 +532,8 @@ html_content = r'''<!DOCTYPE html>
     -webkit-box-pack: justify;
     -webkit-justify-content: space-between;
     justify-content: space-between;
-    border: 2px solid var(--fg);
+    border-width: 2px;
+    border-style: solid;
     padding: 10px 16px;
   }
   .pomo-digits {
@@ -452,7 +546,8 @@ html_content = r'''<!DOCTYPE html>
     font-size: 12px;
     font-weight: 800;
     padding: 4px 8px;
-    border: 1.5px solid var(--fg);
+    border-width: 1.5px;
+    border-style: solid;
   }
   .pomo-btn-row {
     display: -webkit-box;
@@ -472,7 +567,7 @@ html_content = r'''<!DOCTYPE html>
   .pomo-stats-bar {
     margin-top: 8px;
     padding-top: 6px;
-    border-top: 1.5px dotted var(--fg);
+    border-top: 1.5px dotted rgba(128,128,128,0.6);
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
@@ -483,7 +578,6 @@ html_content = r'''<!DOCTYPE html>
     font-weight: 700;
   }
 
-  /* Window 4: 1984 8-Page Dog-Ear Note Pad */
   .notepad-body {
     position: relative;
     padding-bottom: 34px !important;
@@ -502,7 +596,8 @@ html_content = r'''<!DOCTYPE html>
     position: absolute;
     bottom: 0; left: 0; right: 0;
     height: 30px;
-    border-top: 1.5px solid var(--fg);
+    border-top-width: 1.5px;
+    border-top-style: solid;
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
@@ -515,28 +610,22 @@ html_content = r'''<!DOCTYPE html>
     padding: 0 12px 0 38px;
     font-size: 11.5px;
     font-weight: 800;
-    background: var(--bg);
   }
-  /* Iconic 1984 Dog-Ear Page Flipper */
   .dog-ear-btn {
     position: absolute;
     bottom: 0; left: 0;
     width: 28px; height: 28px;
-    border-right: 2px solid var(--fg);
-    border-top: 2px solid var(--fg);
-    background: var(--bg);
+    border-right-width: 2px;
+    border-right-style: solid;
+    border-top-width: 2px;
+    border-top-style: solid;
     cursor: pointer;
     text-align: center;
     line-height: 24px;
     font-size: 14px;
     font-weight: 900;
   }
-  .dog-ear-btn:hover {
-    background: var(--fg);
-    color: var(--bg);
-  }
 
-  /* Classic 1984 Alert Dialog */
   .mac-modal-backdrop {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -556,11 +645,12 @@ html_content = r'''<!DOCTYPE html>
     display: flex;
   }
   .mac-alert-box {
-    width: 380px;
-    background: var(--bg);
-    border: 3px double var(--fg);
-    box-shadow: 6px 6px 0px var(--win-shadow);
-    padding: 18px 20px;
+    width: 460px;
+    border-width: 3px;
+    border-style: double;
+    -webkit-box-shadow: 6px 6px 0px #000000;
+    box-shadow: 6px 6px 0px #000000;
+    padding: 18px 22px;
   }
   .mac-alert-row {
     display: -webkit-box;
@@ -569,16 +659,17 @@ html_content = r'''<!DOCTYPE html>
     -webkit-box-align: start;
     -webkit-align-items: flex-start;
     align-items: flex-start;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
   .happy-mac-ascii {
-    width: 48px;
-    height: 54px;
-    border: 2px solid var(--fg);
+    width: 52px;
+    height: 58px;
+    border-width: 2px;
+    border-style: solid;
     border-radius: 4px;
-    margin-right: 14px;
+    margin-right: 16px;
     text-align: center;
-    padding-top: 6px;
+    padding-top: 8px;
     font-weight: 900;
     font-size: 14px;
     line-height: 1.2;
@@ -587,18 +678,19 @@ html_content = r'''<!DOCTYPE html>
 </head>
 <body class="theme-bw">
 
-<!-- 1984 System 1.0 Menu Bar -->
+<!-- 1984 System 1.0 Menu Bar (OS X 10.8.5 폰트 깨짐 없는 순정 기호 적용) -->
 <div class="mac-menubar">
   <div class="menu-left">
-    <div class="menu-item menu-apple" id="menuAbout" title="About Macintosh 1984">&#63743;</div>
-    <div class="menu-item" id="menuThemeBW" title="1984 오리지널 1-Bit 흑백 모드">1984 B&amp;W</div>
+    <div class="menu-item menu-apple" id="menuAbout" title="About This Macintosh">&#63743;</div>
+    <div class="menu-item active-menu" id="menuThemeBW" title="1984 오리지널 1-Bit 흑백 모드">1984 B&amp;W</div>
     <div class="menu-item" id="menuThemeAmber" title="1984 호박색 CRT 모니터">Amber CRT</div>
     <div class="menu-item" id="menuThemeGreen" title="Apple II 그린 모니터">Green CRT</div>
     <div class="menu-item" id="menuThemeBraun" title="디터 람스 브라운 탁상시계 테마">Braun Edition</div>
-    <div class="menu-item" id="menuSoundToggle" title="1984 사각파 비프음 및 차임벨 켜기/끄기">🔊 Sound: ON</div>
-    <div class="menu-item" id="menuFullScreen" title="전체 화면 오브제 모드 전환 (Cmd + F)">⛶ Fullscreen</div>
+    <div class="menu-item" id="menuSoundToggle" title="1984 사각파 비프음 및 차임벨 켜기/끄기">&#9835; Sound: ON</div>
+    <div class="menu-item" id="menuFullScreen" title="전체 화면 오브제 모드 전환 (Cmd + F)">[ ] Fullscreen</div>
   </div>
   <div class="menu-right">
+    <span id="menubarModelBadge" style="margin-right: 14px; font-size: 12px;">Macintosh</span>
     <span id="menubarMiniStat" style="margin-right: 14px; font-size: 12px;">CPU 0%</span>
     <span id="menubarClock">00:00:00</span>
   </div>
@@ -606,10 +698,9 @@ html_content = r'''<!DOCTYPE html>
 
 <!-- System 1.0 Desktop Workspace -->
 <div class="mac-desktop">
-  <!-- Top Row: Desk Clock + Hardware Telemetry -->
   <div class="desktop-row">
     <!-- DA 1: 1984 Master Clock & D-Day -->
-    <div class="mac-window win-flex-6">
+    <div class="mac-window win-flex-5">
       <div class="mac-titlebar">
         <div class="mac-close-box" id="btnChimeTest" title="클릭하면 1984 매킨토시 부팅 차임벨이 울립니다"></div>
         <span class="mac-title-text">Macintosh 1984 — Desk Clock &amp; D-Day</span>
@@ -636,32 +727,43 @@ html_content = r'''<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- DA 2: Native IOKit & AppleSMC Hardware Telemetry -->
-    <div class="mac-window win-flex-5">
+    <!-- DA 2: Machine Specs & Real-Time Telemetry -->
+    <div class="mac-window win-flex-6">
       <div class="mac-titlebar">
-        <div class="mac-close-box" id="btnRefreshHW" title="하드웨어 센서 즉시 갱신"></div>
-        <span class="mac-title-text">System Telemetry (SMC / IOKit)</span>
+        <div class="mac-close-box" id="btnRefreshHW" title="하드웨어 센서 및 디스크 정보 즉시 갱신"></div>
+        <span class="mac-title-text">About This Mac &amp; System Telemetry</span>
       </div>
       <div class="mac-win-body">
+        <div class="spec-summary-box">
+          <div class="spec-line">
+            <span class="spec-key">&#9632; MODEL</span>
+            <span class="spec-val" id="specModelName">Detecting Mac Model...</span>
+          </div>
+          <div class="spec-line">
+            <span class="spec-key">&#9670; CPU</span>
+            <span class="spec-val" id="specCpuName">Detecting Processor...</span>
+          </div>
+          <div class="spec-line">
+            <span class="spec-key">&#63743; SYSTEM OS</span>
+            <span class="spec-val" id="specOsVersion">Detecting macOS...</span>
+          </div>
+          <div class="spec-line">
+            <span class="spec-key">&#9635; STARTUP DISK</span>
+            <span class="spec-val" id="specDiskName">Macintosh HD</span>
+          </div>
+        </div>
+
         <div class="telemetry-row">
           <div class="telemetry-label-line">
-            <span>CPU LOAD (Mach Kernel)</span>
-            <span id="lblCpuLoad">0%</span>
+            <span>CPU LOAD &amp; MEMORY (RAM)</span>
+            <span id="lblCpuAndRam">CPU 0% · RAM 0 / 0 MB</span>
           </div>
           <div class="mac-gauge-track"><div class="mac-gauge-fill" id="barCpuLoad" style="width:8%;"></div></div>
         </div>
 
         <div class="telemetry-row">
           <div class="telemetry-label-line">
-            <span>MEMORY IN USE (RAM)</span>
-            <span id="lblRamUsage">0 MB / 0 MB</span>
-          </div>
-          <div class="mac-gauge-track"><div class="mac-gauge-fill" id="barRamUsage" style="width:35%;"></div></div>
-        </div>
-
-        <div class="telemetry-row">
-          <div class="telemetry-label-line">
-            <span>BATTERY / POWER SOURCE</span>
+            <span id="lblBatteryTitle">BATTERY / POWER SOURCE</span>
             <span id="lblBattery">100% (AC Power)</span>
           </div>
           <div class="mac-gauge-track"><div class="mac-gauge-fill" id="barBattery" style="width:100%;"></div></div>
@@ -677,18 +779,17 @@ html_content = r'''<!DOCTYPE html>
             <div class="hw-chip-lbl">COOLING FAN</div>
           </div>
           <div class="hw-chip">
-            <div class="hw-chip-val" id="valDiskFree">-- GB</div>
-            <div class="hw-chip-lbl">DISK FREE</div>
+            <div class="hw-chip-val" id="valRamPct">-- %</div>
+            <div class="hw-chip-lbl">RAM IN USE</div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Bottom Row: Pomodoro Chronometer + 8-Page Dog-Ear Note Pad -->
   <div class="desktop-row">
     <!-- DA 3: Pomodoro Focus Timer -->
-    <div class="mac-window win-flex-6">
+    <div class="mac-window win-flex-5">
       <div class="mac-titlebar">
         <div class="mac-close-box" id="btnResetPomoStats" title="오늘 누적 집중 기록 초기화"></div>
         <span class="mac-title-text">Focus Chronometer (Pomodoro)</span>
@@ -702,8 +803,8 @@ html_content = r'''<!DOCTYPE html>
         </div>
 
         <div class="pomo-btn-row">
-          <button class="mac-btn mac-btn-default" id="btnPomoStart">▶ START / PAUSE</button>
-          <button class="mac-btn" id="btnPomoReset">↺ RESET</button>
+          <button class="mac-btn mac-btn-default" id="btnPomoStart">&#9654; START</button>
+          <button class="mac-btn" id="btnPomoReset">&#8634; RESET</button>
           <button class="mac-btn" id="btnPreset50">50분 집중</button>
           <button class="mac-btn" id="btnPreset25">25분 집중</button>
           <button class="mac-btn" id="btnPreset10">10분 휴식</button>
@@ -717,7 +818,7 @@ html_content = r'''<!DOCTYPE html>
     </div>
 
     <!-- DA 4: Iconic 1984 8-Page Note Pad -->
-    <div class="mac-window win-flex-5">
+    <div class="mac-window win-flex-6">
       <div class="mac-titlebar">
         <div class="mac-close-box"></div>
         <span class="mac-title-text">Note Pad (8-Page Scratchpad)</span>
@@ -734,16 +835,18 @@ html_content = r'''<!DOCTYPE html>
   </div>
 </div>
 
-<!-- 1984 System 1.0 Alert Dialog -->
 <div class="mac-modal-backdrop" id="aboutModal">
   <div class="mac-alert-box">
     <div class="mac-alert-row">
       <div class="happy-mac-ascii">^_^<br>&#9600;&#9600;</div>
-      <div>
-        <div style="font-weight:900; font-size:14px; margin-bottom:6px;">Macintosh 1984 Studio</div>
-        <div style="font-size:12px; line-height:1.45;">
-          1984년 오리지널 Macintosh (System 1.0) 데스크톱 액세서리 및 A1181 실시간 하드웨어 계기판입니다.<br><br>
-          • <b>단축키:</b> Space (타이머 시작/정지), Cmd+F (전체 화면)
+      <div style="width:100%;">
+        <div style="font-weight:900; font-size:15px; margin-bottom:8px;">About This Macintosh (Macintosh 1984)</div>
+        <div style="font-size:12px; line-height:1.65; border-top:1px solid #888888; padding-top:6px;">
+          • <b>모델명:</b> <span id="modalModelName">-</span><br>
+          • <b>프로세서:</b> <span id="modalCpuName">-</span><br>
+          • <b>운영체제:</b> <span id="modalOsVersion">-</span><br>
+          • <b>시동 디스크:</b> <span id="modalDiskName">-</span><br>
+          • <b>설치된 메모리:</b> <span id="modalRamTotal">-</span>
         </div>
       </div>
     </div>
@@ -769,8 +872,6 @@ html_content = r'''<!DOCTYPE html>
     pomoSessionsToday: 0,
     pomoTotalMinutes: 0
   };
-
-  var pomoInterval = null;
 
   function hasNative() {
     return typeof window.NativeBridge !== 'undefined' && window.NativeBridge !== null;
@@ -806,7 +907,6 @@ html_content = r'''<!DOCTYPE html>
     } catch (e) {}
   }
 
-  /* 1. Theme & Sound Controls */
   function applyTheme(t) {
     state.theme = t;
     document.body.className = 'theme-' + t;
@@ -824,7 +924,7 @@ html_content = r'''<!DOCTYPE html>
 
   document.getElementById('menuSoundToggle').onclick = function () {
     state.soundEnabled = !state.soundEnabled;
-    this.innerHTML = state.soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
+    this.innerHTML = state.soundEnabled ? '&#9835; Sound: ON' : '&#9835; Sound: OFF';
     if (state.soundEnabled) playSound('beep');
     saveStateToNative();
   };
@@ -846,7 +946,6 @@ html_content = r'''<!DOCTYPE html>
     playSound('chime');
   };
 
-  /* 2. Master Clock & D-Day Engine */
   function updateClockAndDDay() {
     var now = new Date();
     var h24 = now.getHours();
@@ -865,7 +964,6 @@ html_content = r'''<!DOCTYPE html>
     var dateStr = now.getFullYear() + '년 ' + (now.getMonth() + 1) + '월 ' + now.getDate() + '일 ' + weekNames[now.getDay()];
     document.getElementById('mainClockDate').innerHTML = dateStr;
 
-    // D-Day Calculation
     var m = String(state.ddayDate || '').match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
     var badge = document.getElementById('ddayResultBadge');
     if (m) {
@@ -892,28 +990,44 @@ html_content = r'''<!DOCTYPE html>
     saveStateToNative();
   };
 
-  /* 3. Real-Time Hardware Telemetry (IOKit + AppleSMC + Mach) */
   function pollHardwareTelemetry() {
     if (!hasNative()) return;
     try {
       var raw = window.NativeBridge.getHardwareTelemetryJSON();
       var hw = JSON.parse(raw);
 
-      var cpu = hw.cpuLoad || 0;
-      document.getElementById('lblCpuLoad').innerHTML = cpu + '%';
-      document.getElementById('barCpuLoad').style.width = Math.max(4, Math.min(100, cpu)) + '%';
-      document.getElementById('menubarMiniStat').innerHTML =
-        'CPU ' + cpu + '% · ' + (hw.cpuTemp > 0 ? (hw.cpuTemp + '°C') : 'RAM ' + hw.ramPct + '%');
+      var modelDisplay = hw.modelDisplay || 'Macintosh';
+      var cpuDisplay = hw.cpuBrand || 'Intel Processor';
+      var osDisplay = hw.osDisplay || 'Mac OS X';
+      var diskDisplay = (hw.diskName || 'Macintosh HD') + ' (여유 ' + hw.diskFreeGB + 'GB / 전체 ' + hw.diskTotalGB + 'GB)';
 
-      document.getElementById('lblRamUsage').innerHTML = hw.ramUsedMB + ' MB / ' + hw.ramTotalMB + ' MB (' + hw.ramPct + '%)';
-      document.getElementById('barRamUsage').style.width = Math.max(4, Math.min(100, hw.ramPct)) + '%';
+      document.getElementById('specModelName').innerHTML = modelDisplay;
+      document.getElementById('specCpuName').innerHTML = cpuDisplay;
+      document.getElementById('specOsVersion').innerHTML = osDisplay;
+      document.getElementById('specDiskName').innerHTML = diskDisplay;
+
+      document.getElementById('menubarModelBadge').innerHTML = hw.shortModel || 'Macintosh';
+
+      document.getElementById('modalModelName').innerHTML = modelDisplay;
+      document.getElementById('modalCpuName').innerHTML = cpuDisplay;
+      document.getElementById('modalOsVersion').innerHTML = osDisplay;
+      document.getElementById('modalDiskName').innerHTML = diskDisplay;
+      document.getElementById('modalRamTotal').innerHTML = hw.ramTotalMB + ' MB (' + Math.round(hw.ramTotalMB / 1024) + ' GB)';
+
+      var cpu = hw.cpuLoad || 0;
+      document.getElementById('lblCpuAndRam').innerHTML =
+        'CPU ' + cpu + '%  |  RAM ' + hw.ramUsedMB + ' / ' + hw.ramTotalMB + ' MB';
+      document.getElementById('barCpuLoad').style.width = Math.max(4, Math.min(100, cpu)) + '%';
+
+      document.getElementById('menubarMiniStat').innerHTML =
+        'CPU ' + cpu + '% · ' + (hw.cpuTemp > 0 ? (hw.cpuTemp + '°C') : ('RAM ' + hw.ramPct + '%'));
 
       document.getElementById('lblBattery').innerHTML = hw.batteryPct + '% (' + hw.powerSource + ')';
       document.getElementById('barBattery').style.width = Math.max(4, Math.min(100, hw.batteryPct)) + '%';
 
       document.getElementById('valCpuTemp').innerHTML = hw.cpuTemp > 0 ? (hw.cpuTemp + ' °C') : 'N/A';
-      document.getElementById('valFanRpm').innerHTML = hw.fanRpm > 0 ? (hw.fanRpm + ' RPM') : ' Quiet ';
-      document.getElementById('valDiskFree').innerHTML = hw.diskFreeGB + ' GB';
+      document.getElementById('valFanRpm').innerHTML = hw.fanRpm > 0 ? (hw.fanRpm + ' RPM') : 'Quiet';
+      document.getElementById('valRamPct').innerHTML = hw.ramPct + ' %';
     } catch (e) {}
   }
 
@@ -922,7 +1036,6 @@ html_content = r'''<!DOCTYPE html>
     pollHardwareTelemetry();
   };
 
-  /* 4. Pomodoro Focus Chronometer */
   function renderPomodoro() {
     var mins = Math.floor(state.pomoRemainSecs / 60);
     var secs = state.pomoRemainSecs % 60;
@@ -930,8 +1043,8 @@ html_content = r'''<!DOCTYPE html>
       ('0' + mins).slice(-2) + ':' + ('0' + secs).slice(-2);
 
     var tag = document.getElementById('pomoStatusTag');
-    tag.innerHTML = (state.pomoRunning ? '● RUNNING — ' : '⏸ PAUSED — ') + state.pomoModeLabel;
-    document.getElementById('btnPomoStart').innerHTML = state.pomoRunning ? '⏸ PAUSE' : '▶ START';
+    tag.innerHTML = (state.pomoRunning ? '&#9679; RUNNING — ' : '|| PAUSED — ') + state.pomoModeLabel;
+    document.getElementById('btnPomoStart').innerHTML = state.pomoRunning ? '|| PAUSE' : '&#9654; START';
 
     document.getElementById('lblPomoSessions').innerHTML = '오늘 완료한 세션: ' + state.pomoSessionsToday + '회';
     document.getElementById('lblPomoTotalMins').innerHTML = '누적 집중 시간: ' + state.pomoTotalMinutes + '분';
@@ -971,7 +1084,6 @@ html_content = r'''<!DOCTYPE html>
     renderPomodoro();
   };
 
-  /* 5. Iconic 1984 8-Page Dog-Ear Note Pad */
   var elNotepad = document.getElementById('notepadInput');
   function renderNotepad() {
     elNotepad.value = state.notepadPages[state.currentPage] || '';
@@ -996,18 +1108,17 @@ html_content = r'''<!DOCTYPE html>
     saveStateToNative();
   };
 
-  /* Keyboard Shortcuts */
   document.onkeydown = function (e) {
     var tag = (e.target || e.srcElement).tagName;
     var inInput = (tag === 'INPUT' || tag === 'TEXTAREA');
     var key = e.keyCode || e.which;
 
-    if ((e.metaKey || e.ctrlKey) && key === 70) { // Cmd + F
+    if ((e.metaKey || e.ctrlKey) && key === 70) {
       e.preventDefault();
       if (hasNative()) window.NativeBridge.toggleFullscreen();
       return;
     }
-    if (!inInput && key === 32) { // Spacebar toggles Pomodoro
+    if (!inInput && key === 32) {
       e.preventDefault();
       togglePomoRun();
     }
@@ -1017,7 +1128,7 @@ html_content = r'''<!DOCTYPE html>
     loadStateFromNative();
     elDdayTitle.value = state.ddayTitle;
     elDdayDate.value = state.ddayDate;
-    document.getElementById('menuSoundToggle').innerHTML = state.soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
+    document.getElementById('menuSoundToggle').innerHTML = state.soundEnabled ? '&#9835; Sound: ON' : '&#9835; Sound: OFF';
     applyTheme(state.theme || 'bw');
     renderNotepad();
     renderPomodoro();
@@ -1056,7 +1167,7 @@ html_file = os.path.join(res_dir, "mac1984.html")
 with open(html_file, "w", encoding="utf-8") as f:
     f.write(html_content)
 
-# 2. Objective-C Cocoa + IOKit (AppleSMC + IOPowerSources + Mach Kernel) 브릿지
+# 3. Objective-C Cocoa + IOKit 브릿지 (SMC keyInfo.dataSize 보존 버그 수정 + MacBookAir7,2 등 모델 매핑 추가)
 objc_source = r'''
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
@@ -1068,6 +1179,7 @@ objc_source = r'''
 #include <mach/mach_host.h>
 #include <sys/sysctl.h>
 #include <math.h>
+#include <stdlib.h>
 
 #ifndef NSWindowStyleMaskTitled
 #define NSWindowStyleMaskTitled (1 << 0)
@@ -1076,7 +1188,6 @@ objc_source = r'''
 #define NSWindowStyleMaskResizable (1 << 3)
 #endif
 
-// AppleSMC Structure Definitions for CPU Temp & Fan RPM on Intel Macs (A1181 ~ 2019 MBP)
 typedef struct {
     char major;
     char minor;
@@ -1117,28 +1228,35 @@ static uint32_t fourCharToUInt32(const char *str) {
     return ((uint32_t)str[0] << 24) | ((uint32_t)str[1] << 16) | ((uint32_t)str[2] << 8) | (uint32_t)str[3];
 }
 
+// 핵심 수정: kSMCReadKey 호출 후 드라이버가 outVal->keyInfo를 0으로 초기화하는 문제를 막기 위해
+// kSMCGetKeyInfo에서 얻은 dataSize와 dataType을 outVal에 다시 복원!
 static BOOL readSMCKeyRaw(io_connect_t conn, const char *keyStr, SMCKeyData_t *outVal) {
     if (!conn) return NO;
     SMCKeyData_t inStruct;
-    SMCKeyData_t outStruct;
+    SMCKeyData_t infoStruct;
     memset(&inStruct, 0, sizeof(SMCKeyData_t));
-    memset(&outStruct, 0, sizeof(SMCKeyData_t));
+    memset(&infoStruct, 0, sizeof(SMCKeyData_t));
+    memset(outVal, 0, sizeof(SMCKeyData_t));
 
     inStruct.key = fourCharToUInt32(keyStr);
     inStruct.data8 = 9; // kSMCGetKeyInfo
     size_t outSize = sizeof(SMCKeyData_t);
-    kern_return_t kr = IOConnectCallStructMethod(conn, 2, &inStruct, sizeof(SMCKeyData_t), &outStruct, &outSize);
-    if (kr != kIOReturnSuccess) return NO;
+    kern_return_t kr = IOConnectCallStructMethod(conn, 2, &inStruct, sizeof(SMCKeyData_t), &infoStruct, &outSize);
+    if (kr != kIOReturnSuccess || infoStruct.keyInfo.dataSize == 0) return NO;
 
-    inStruct.keyInfo.dataSize = outStruct.keyInfo.dataSize;
+    inStruct.keyInfo.dataSize = infoStruct.keyInfo.dataSize;
     inStruct.data8 = 5; // kSMCReadKey
     outSize = sizeof(SMCKeyData_t);
     kr = IOConnectCallStructMethod(conn, 2, &inStruct, sizeof(SMCKeyData_t), outVal, &outSize);
-    return (kr == kIOReturnSuccess);
+    if (kr != kIOReturnSuccess) return NO;
+
+    outVal->keyInfo.dataSize = infoStruct.keyInfo.dataSize;
+    outVal->keyInfo.dataType = infoStruct.keyInfo.dataType;
+    return YES;
 }
 
 static int readSMCCpuTemperature(io_connect_t conn) {
-    const char *tempKeys[] = { "TC0D", "TC0P", "TC0E", "TC0F", "TCXC", NULL };
+    const char *tempKeys[] = { "TC0D", "TC0P", "TC0E", "TC0F", "TC0H", "TCXC", "Tp0P", "TW0P", NULL };
     for (int i = 0; tempKeys[i] != NULL; i++) {
         SMCKeyData_t val;
         if (readSMCKeyRaw(conn, tempKeys[i], &val) && val.keyInfo.dataSize >= 2) {
@@ -1152,15 +1270,20 @@ static int readSMCCpuTemperature(io_connect_t conn) {
 static int readSMCFanRPM(io_connect_t conn) {
     SMCKeyData_t val;
     if (readSMCKeyRaw(conn, "F0Ac", &val) && val.keyInfo.dataSize >= 2) {
-        uint16_t raw = ((uint8_t)val.bytes[0] << 8) | (uint8_t)val.bytes[1];
-        // fpe2 (14.2 fixed point) or flt
-        int rpm = (int)(raw >> 2);
-        if (rpm >= 500 && rpm <= 8000) return rpm;
+        if (val.keyInfo.dataSize == 4 && val.keyInfo.dataType == fourCharToUInt32("flt ")) {
+            float fval = 0.0f;
+            memcpy(&fval, val.bytes, 4);
+            int rpm = (int)(fval + 0.5f);
+            if (rpm >= 400 && rpm <= 8000) return rpm;
+        } else {
+            uint16_t raw = ((uint8_t)val.bytes[0] << 8) | (uint8_t)val.bytes[1];
+            int rpm = (int)(raw >> 2);
+            if (rpm >= 400 && rpm <= 8000) return rpm;
+        }
     }
     return 0;
 }
 
-// 1-Bit Macintosh 1984 Square-Wave Audio Synthesizer
 static NSMutableData* createWAVData(const int16_t *samples, uint32_t numSamples, uint32_t sampleRate) {
     uint32_t dataSize = numSamples * sizeof(int16_t);
     uint32_t riffSize = 36 + dataSize;
@@ -1198,15 +1321,114 @@ static NSMutableData* createWAVData(const int16_t *samples, uint32_t numSamples,
     NSSound *soundClick;
     NSSound *soundBeep;
     NSSound *soundChime;
+
+    NSString *cachedCpuBrand;
+    NSString *cachedModelDisplay;
+    NSString *cachedShortModel;
+    NSString *cachedOsDisplay;
 }
 @end
 
 @implementation Mac1984Controller
 
+- (void)initStaticSystemSpecs {
+    char cpuBuf[256] = {0};
+    size_t cpuLen = sizeof(cpuBuf) - 1;
+    NSString *rawCpu = @"Intel Processor";
+    if (sysctlbyname("machdep.cpu.brand_string", cpuBuf, &cpuLen, NULL, 0) == 0 && strlen(cpuBuf) > 0) {
+        rawCpu = [NSString stringWithUTF8String:cpuBuf];
+    }
+    rawCpu = [rawCpu stringByReplacingOccurrencesOfString:@"(R)" withString:@""];
+    rawCpu = [rawCpu stringByReplacingOccurrencesOfString:@"(TM)" withString:@""];
+    rawCpu = [rawCpu stringByReplacingOccurrencesOfString:@"CPU " withString:@""];
+    while ([rawCpu rangeOfString:@"  "].location != NSNotFound) {
+        rawCpu = [rawCpu stringByReplacingOccurrencesOfString:@"  " withString:@" "];
+    }
+    rawCpu = [rawCpu stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+
+    int cores = 0;
+    size_t coreLen = sizeof(cores);
+    sysctlbyname("hw.physicalcpu", &cores, &coreLen, NULL, 0);
+    if (cores > 0) {
+        cachedCpuBrand = [[NSString stringWithFormat:@"%@ (%dC)", rawCpu, cores] retain];
+    } else {
+        cachedCpuBrand = [rawCpu retain];
+    }
+
+    char modBuf[128] = {0};
+    size_t modLen = sizeof(modBuf) - 1;
+    NSString *hwModel = @"Macintosh";
+    if (sysctlbyname("hw.model", modBuf, &modLen, NULL, 0) == 0 && strlen(modBuf) > 0) {
+        hwModel = [NSString stringWithUTF8String:modBuf];
+    }
+
+    NSDictionary *modelMap = [NSDictionary dictionaryWithObjectsAndKeys:
+        @"A1181 · MacBook (13-inch, 2006)", @"MacBook1,1",
+        @"A1181 · MacBook (13-inch, Late 2006 / Mid 2007)", @"MacBook2,1",
+        @"A1181 · MacBook (13-inch, Late 2007)", @"MacBook3,1",
+        @"A1181 · MacBook (13-inch, Early/Late 2008)", @"MacBook4,1",
+        @"A1181 · MacBook (13-inch, Early/Mid 2009)", @"MacBook5,2",
+        @"A1342 · MacBook (13-inch, Late 2009)", @"MacBook6,1",
+        @"A1342 · MacBook (13-inch, Mid 2010)", @"MacBook7,1",
+        @"A1466 · MacBook Air (13-inch, Early 2015 / 2017)", @"MacBookAir7,2",
+        @"A1398 · MacBook Pro (15-inch, Late 2013 / Mid 2014)", @"MacBookPro11,2",
+        @"A1398 · MacBook Pro (15-inch, Late 2013 / Mid 2014)", @"MacBookPro11,3",
+        @"A1398 · MacBook Pro (Retina, 15-inch, Mid 2015)", @"MacBookPro11,4",
+        @"A1398 · MacBook Pro (Retina, 15-inch, Mid 2015)", @"MacBookPro11,5",
+        @"A1502 · MacBook Pro (Retina, 13-inch, Early 2015)", @"MacBookPro12,1",
+        @"A2141 · MacBook Pro (16-inch, 2019)", @"MacBookPro16,1",
+        @"A2141 · MacBook Pro (16-inch, 2019)", @"MacBookPro16,4",
+        nil];
+
+    NSString *mapped = [modelMap objectForKey:hwModel];
+    if (mapped) {
+        cachedModelDisplay = [[NSString stringWithFormat:@"%@ [%@]", mapped, hwModel] retain];
+        cachedShortModel = [[[mapped componentsSeparatedByString:@" · "] objectAtIndex:0] retain];
+    } else if ([hwModel hasPrefix:@"MacBook1,"] || [hwModel hasPrefix:@"MacBook2,"] ||
+               [hwModel hasPrefix:@"MacBook3,"] || [hwModel hasPrefix:@"MacBook4,"] || [hwModel isEqualToString:@"MacBook5,2"]) {
+        cachedModelDisplay = [[NSString stringWithFormat:@"A1181 · MacBook [%@]", hwModel] retain];
+        cachedShortModel = [@"A1181" retain];
+    } else {
+        cachedModelDisplay = [hwModel retain];
+        cachedShortModel = [hwModel retain];
+    }
+
+    NSDictionary *sysVer = [NSDictionary dictionaryWithContentsOfFile:@"/System/Library/CoreServices/SystemVersion.plist"];
+    NSString *prodName = sysVer ? [sysVer objectForKey:@"ProductName"] : @"Mac OS X";
+    NSString *verStr = sysVer ? [sysVer objectForKey:@"ProductUserVisibleVersion"] : @"10.8";
+    NSString *buildStr = sysVer ? [sysVer objectForKey:@"ProductBuildVersion"] : @"";
+    if (!prodName) prodName = @"Mac OS X";
+    if (!verStr) verStr = @"10.8";
+
+    NSString *codeName = @"";
+    if ([verStr hasPrefix:@"10.6"]) codeName = @"Snow Leopard";
+    else if ([verStr hasPrefix:@"10.7"]) codeName = @"Lion";
+    else if ([verStr hasPrefix:@"10.8"]) codeName = @"Mountain Lion";
+    else if ([verStr hasPrefix:@"10.9"]) codeName = @"Mavericks";
+    else if ([verStr hasPrefix:@"10.10"]) codeName = @"Yosemite";
+    else if ([verStr hasPrefix:@"10.11"]) codeName = @"El Capitan";
+    else if ([verStr hasPrefix:@"10.12"]) codeName = @"Sierra";
+    else if ([verStr hasPrefix:@"10.13"]) codeName = @"High Sierra";
+    else if ([verStr hasPrefix:@"10.14"]) codeName = @"Mojave";
+    else if ([verStr hasPrefix:@"10.15"]) codeName = @"Catalina";
+    else if ([verStr hasPrefix:@"11."]) codeName = @"Big Sur";
+    else if ([verStr hasPrefix:@"12."]) codeName = @"Monterey";
+    else if ([verStr hasPrefix:@"13."]) codeName = @"Ventura";
+    else if ([verStr hasPrefix:@"14."]) codeName = @"Sonoma";
+    else if ([verStr hasPrefix:@"15."]) codeName = @"Sequoia";
+
+    if ([codeName length] > 0 && [buildStr length] > 0) {
+        cachedOsDisplay = [[NSString stringWithFormat:@"%@ %@ (%@ · %@)", prodName, verStr, codeName, buildStr] retain];
+    } else if ([codeName length] > 0) {
+        cachedOsDisplay = [[NSString stringWithFormat:@"%@ %@ (%@)", prodName, verStr, codeName] retain];
+    } else {
+        cachedOsDisplay = [[NSString stringWithFormat:@"%@ %@", prodName, verStr] retain];
+    }
+}
+
 - (void)initRetroSounds {
     uint32_t sr = 44100;
 
-    // 1. 1984 Mouse Click (12ms crisp 1-bit pulse)
     uint32_t cLen = (uint32_t)(sr * 0.012);
     int16_t *cBuf = (int16_t *)calloc(cLen, sizeof(int16_t));
     for (uint32_t i = 0; i < cLen; i++) {
@@ -1216,7 +1438,6 @@ static NSMutableData* createWAVData(const int16_t *samples, uint32_t numSamples,
     soundClick = [[NSSound alloc] initWithData:createWAVData(cBuf, cLen, sr)];
     free(cBuf);
 
-    // 2. Classic Mac 1984 System Beep (90ms square-wave 880Hz)
     uint32_t bLen = (uint32_t)(sr * 0.09);
     int16_t *bBuf = (int16_t *)calloc(bLen, sizeof(int16_t));
     for (uint32_t i = 0; i < bLen; i++) {
@@ -1227,7 +1448,6 @@ static NSMutableData* createWAVData(const int16_t *samples, uint32_t numSamples,
     soundBeep = [[NSSound alloc] initWithData:createWAVData(bBuf, bLen, sr)];
     free(bBuf);
 
-    // 3. 1984 Macintosh Startup / Pomodoro Complete Chime (550ms F# Major chord arpeggio)
     uint32_t mLen = (uint32_t)(sr * 0.55);
     int16_t *mBuf = (int16_t *)calloc(mLen, sizeof(int16_t));
     for (uint32_t i = 0; i < mLen; i++) {
@@ -1253,6 +1473,7 @@ static NSMutableData* createWAVData(const int16_t *samples, uint32_t numSamples,
             IOServiceOpen(service, mach_task_self(), 0, &smcConn);
             IOObjectRelease(service);
         }
+        [self initStaticSystemSpecs];
         [self initRetroSounds];
     }
     return self;
@@ -1309,7 +1530,6 @@ static NSMutableData* createWAVData(const int16_t *samples, uint32_t numSamples,
 }
 
 - (NSString *)getHardwareTelemetryJSON {
-    // 1. CPU Load via Mach host_processor_info
     int cpuLoadPct = 0;
     natural_t cpuCount = 0;
     processor_info_array_t infoArray = NULL;
@@ -1336,7 +1556,6 @@ static NSMutableData* createWAVData(const int16_t *samples, uint32_t numSamples,
         vm_deallocate(mach_task_self(), (vm_address_t)infoArray, infoCount * sizeof(integer_t));
     }
 
-    // 2. RAM Usage via sysctl & Mach VM statistics
     int64_t totalMemBytes = 0;
     size_t sz = sizeof(totalMemBytes);
     sysctlbyname("hw.memsize", &totalMemBytes, &sz, NULL, 0);
@@ -1353,7 +1572,6 @@ static NSMutableData* createWAVData(const int16_t *samples, uint32_t numSamples,
     }
     int ramPct = ramTotalMB > 0 ? (int)((ramUsedMB * 100) / ramTotalMB) : 0;
 
-    // 3. Battery & Power Source via IOPowerSources
     int batteryPct = 100;
     NSString *powerSrc = @"AC Power";
     CFTypeRef psInfo = IOPSCopyPowerSourcesInfo();
@@ -1377,16 +1595,25 @@ static NSMutableData* createWAVData(const int16_t *samples, uint32_t numSamples,
         CFRelease(psInfo);
     }
 
-    // 4. AppleSMC CPU Temp & Fan Speed
     int cpuTemp = readSMCCpuTemperature(smcConn);
     int fanRpm = readSMCFanRPM(smcConn);
 
-    // 5. Disk Free Space
-    NSDictionary *fsAttrs = [[NSFileManager defaultManager] attributesOfFileSystemForPath:@"/" error:nil];
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *diskName = [fm displayNameAtPath:@"/"];
+    if (!diskName || [diskName length] == 0) diskName = @"Macintosh HD";
+
+    NSDictionary *fsAttrs = [fm attributesOfFileSystemForPath:@"/" error:nil];
     unsigned long long freeBytes = fsAttrs ? [[fsAttrs objectForKey:NSFileSystemFreeSize] unsignedLongLongValue] : 0;
+    unsigned long long totalBytes = fsAttrs ? [[fsAttrs objectForKey:NSFileSystemSize] unsignedLongLongValue] : 0;
     int diskFreeGB = (int)(freeBytes / (1024ULL * 1024ULL * 1024ULL));
+    int diskTotalGB = (int)(totalBytes / (1024ULL * 1024ULL * 1024ULL));
 
     NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys:
+        cachedModelDisplay ? cachedModelDisplay : @"Macintosh", @"modelDisplay",
+        cachedShortModel ? cachedShortModel : @"Macintosh", @"shortModel",
+        cachedCpuBrand ? cachedCpuBrand : @"Intel Processor", @"cpuBrand",
+        cachedOsDisplay ? cachedOsDisplay : @"Mac OS X", @"osDisplay",
+        [diskName precomposedStringWithCanonicalMapping], @"diskName",
         [NSNumber numberWithInt:cpuLoadPct], @"cpuLoad",
         [NSNumber numberWithInt:ramUsedMB], @"ramUsedMB",
         [NSNumber numberWithInt:ramTotalMB], @"ramTotalMB",
@@ -1396,6 +1623,7 @@ static NSMutableData* createWAVData(const int16_t *samples, uint32_t numSamples,
         [NSNumber numberWithInt:cpuTemp], @"cpuTemp",
         [NSNumber numberWithInt:fanRpm], @"fanRpm",
         [NSNumber numberWithInt:diskFreeGB], @"diskFreeGB",
+        [NSNumber numberWithInt:diskTotalGB], @"diskTotalGB",
         nil];
 
     NSData *json = [NSJSONSerialization dataWithJSONObject:dict options:0 error:nil];
@@ -1431,13 +1659,13 @@ static NSMutableData* createWAVData(const int16_t *samples, uint32_t numSamples,
     [self playMacSound:@"chime"];
 
     NSUInteger style = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
-    window = [[NSWindow alloc] initWithContentRect:NSMakeRect(90, 90, 980, 620)
+    window = [[NSWindow alloc] initWithContentRect:NSMakeRect(80, 80, 1020, 650)
                                          styleMask:style
                                            backing:NSBackingStoreBuffered
                                              defer:NO];
     [window setTitle:@"Macintosh 1984"];
-    [window setMinSize:NSMakeSize(780, 500)];
-    [window setCollectionBehavior:(1 << 7)]; // NSWindowCollectionBehaviorFullScreenPrimary
+    [window setMinSize:NSMakeSize(800, 520)];
+    [window setCollectionBehavior:(1 << 7)];
     [window setDelegate:self];
 
     NSView *content = [window contentView];
@@ -1446,7 +1674,9 @@ static NSMutableData* createWAVData(const int16_t *samples, uint32_t numSamples,
     [webView setFrameLoadDelegate:self];
 
     NSString *htmlPath = [[NSBundle mainBundle] pathForResource:@"mac1984" ofType:@"html"];
-    [[webView mainFrame] loadRequest:[NSURLRequest requestWithURL:[NSURL fileURLWithPath:htmlPath]]];
+    NSString *htmlStr = [NSString stringWithContentsOfFile:htmlPath encoding:NSUTF8StringEncoding error:nil];
+    NSURL *baseURL = [NSURL fileURLWithPath:[htmlPath stringByDeletingLastPathComponent]];
+    [[webView mainFrame] loadHTMLString:(htmlStr ? htmlStr : @"") baseURL:baseURL];
 
     [content addSubview:webView];
     [window makeKeyAndOrderFront:nil];
@@ -1475,118 +1705,29 @@ src_file = os.path.join(res_dir, "main.m")
 with open(src_file, "w", encoding="utf-8") as f:
     f.write(objc_source)
 
-bin_file = os.path.join(macos_dir, "Macintosh1984")
+bin_file = os.path.join(macos_dir, "Macintosh 1984")
 
 subprocess.run([
     "clang", "-arch", "x86_64", "-mmacosx-version-min=10.7",
     "-fno-objc-arc", "-Wno-deprecated-declarations", "-O2",
+    "-Wl,-flat_namespace", "-Wl,-w",
     src_file,
     "-framework", "Cocoa", "-framework", "WebKit", "-framework", "IOKit",
     "-o", bin_file
 ], check=True)
 os.chmod(bin_file, 0o755)
 
-# 3. 1984 Macintosh 128K ("Happy Mac") 전용 앱 아이콘 생성기
-icon_objc = r'''
-#import <Cocoa/Cocoa.h>
-
-void fillRoundRect(NSRect r, CGFloat rad, NSColor *fill, NSColor *stroke, CGFloat lw) {
-    NSBezierPath *p = [NSBezierPath bezierPathWithRoundedRect:r xRadius:rad yRadius:rad];
-    if (fill) { [fill setFill]; [p fill]; }
-    if (stroke) { [stroke setStroke]; [p setLineWidth:lw]; [p stroke]; }
-}
-
-int main(int argc, const char *argv[]) {
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    NSString *outPath = [NSString stringWithUTF8String:argv[1]];
-    NSString *bundlePath = [NSString stringWithUTF8String:argv[2]];
-
-    NSBitmapImageRep *rep = [[[NSBitmapImageRep alloc]
-        initWithBitmapDataPlanes:NULL pixelsWide:1024 pixelsHigh:1024
-                   bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO
-                  colorSpaceName:NSCalibratedRGBColorSpace bytesPerRow:0 bitsPerPixel:0] autorelease];
-    [rep setSize:NSMakeSize(1024, 1024)];
-
-    [NSGraphicsContext saveGraphicsState];
-    [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithBitmapImageRep:rep]];
-
-    // 1. 1984 Macintosh 128K Warm Beige Case
-    fillRoundRect(NSMakeRect(152, 86, 720, 852), 72,
-                  [NSColor colorWithCalibratedRed:0.91 green:0.88 blue:0.79 alpha:1.0],
-                  [NSColor colorWithCalibratedRed:0.22 green:0.20 blue:0.18 alpha:1.0], 16.0);
-
-    // Lower Chin Recess
-    fillRoundRect(NSMakeRect(184, 118, 656, 210), 36,
-                  [NSColor colorWithCalibratedRed:0.85 green:0.81 blue:0.72 alpha:1.0], nil, 0);
-
-    // 2. 9-inch CRT Bezel & Screen
-    fillRoundRect(NSMakeRect(228, 386, 568, 468), 48,
-                  [NSColor colorWithCalibratedRed:0.14 green:0.15 blue:0.16 alpha:1.0],
-                  [NSColor colorWithCalibratedRed:0.05 green:0.05 blue:0.05 alpha:1.0], 10.0);
-
-    fillRoundRect(NSMakeRect(256, 414, 512, 412), 32,
-                  [NSColor colorWithCalibratedRed:0.88 green:0.93 blue:0.95 alpha:1.0], nil, 0);
-
-    // 3. Susan Kare Style "Happy Mac" Face on CRT
-    NSColor *ink = [NSColor colorWithCalibratedRed:0.10 green:0.11 blue:0.12 alpha:1.0];
-    [ink setFill];
-    // Eyes
-    NSRectFill(NSMakeRect(422, 668, 28, 44));
-    NSRectFill(NSMakeRect(574, 668, 28, 44));
-    // Nose (L-shape)
-    NSRectFill(NSMakeRect(502, 588, 20, 68));
-    NSRectFill(NSMakeRect(482, 588, 40, 20));
-    // Smile
-    NSRectFill(NSMakeRect(434, 518, 156, 20));
-    NSRectFill(NSMakeRect(414, 538, 20, 20));
-    NSRectFill(NSMakeRect(590, 538, 20, 20));
-
-    // 4. 400K 3.5" Floppy Disk Drive Slot (Right Chin)
-    fillRoundRect(NSMakeRect(516, 224, 248, 30), 6,
-                  [NSColor colorWithCalibratedRed:0.12 green:0.12 blue:0.12 alpha:1.0], nil, 0);
-
-    // 5. Classic 6-Color Rainbow Badge (Left Chin)
-    CGFloat bx = 244, by = 166;
-    NSArray *rainbow = [NSArray arrayWithObjects:
-        [NSColor colorWithCalibratedRed:0.38 green:0.73 blue:0.27 alpha:1.0],
-        [NSColor colorWithCalibratedRed:0.99 green:0.72 blue:0.15 alpha:1.0],
-        [NSColor colorWithCalibratedRed:0.96 green:0.51 blue:0.12 alpha:1.0],
-        [NSColor colorWithCalibratedRed:0.88 green:0.23 blue:0.24 alpha:1.0],
-        [NSColor colorWithCalibratedRed:0.59 green:0.24 blue:0.59 alpha:1.0],
-        [NSColor colorWithCalibratedRed:0.00 green:0.62 blue:0.86 alpha:1.0], nil];
-    for (int i = 0; i < 6; i++) {
-        [[rainbow objectAtIndex:i] setFill];
-        NSRectFill(NSMakeRect(bx, by + (5 - i) * 8, 48, 8));
-    }
-
-    [NSGraphicsContext restoreGraphicsState];
-
-    NSData *png = [rep representationUsingType:NSPNGFileType properties:[NSDictionary dictionary]];
-    [png writeToFile:outPath atomically:YES];
-
-    NSImage *img = [[[NSImage alloc] initWithData:png] autorelease];
-    if (img && [bundlePath length] > 0) {
-        [[NSWorkspace sharedWorkspace] setIcon:img forFile:bundlePath options:0];
-    }
-    [pool drain];
-    return 0;
-}
-'''
-with open("/tmp/gen_mac1984_icon.m", "w") as f:
-    f.write(icon_objc)
-subprocess.run(["clang", "-Wno-deprecated-declarations", "/tmp/gen_mac1984_icon.m", "-framework", "Cocoa", "-o", "/tmp/gen_mac1984_icon"], check=True)
-
 # 4. Info.plist 생성
 plist_dict = {
-    "CFBundleExecutable": "Macintosh1984",
+    "CFBundleExecutable": "Macintosh 1984",
     "CFBundleIconFile": "Macintosh1984.icns",
     "CFBundleIconName": "Macintosh1984",
     "CFBundleIdentifier": "com.soohyun.macintosh1984",
     "CFBundleName": "Macintosh 1984",
     "CFBundleDisplayName": "Macintosh 1984",
     "CFBundlePackageType": "APPL",
-    "CFBundleShortVersionString": "1.0",
-    "CFBundleVersion": "1",
+    "CFBundleShortVersionString": "1.3",
+    "CFBundleVersion": "4",
     "LSMinimumSystemVersion": "10.7",
     "NSHighResolutionCapable": True
 }
@@ -1595,26 +1736,19 @@ with open(os.path.join(contents_dir, "Info.plist"), "wb") as fp:
 
 # 5. 아이콘 컴파일 및 각인
 iconset_dir = "/tmp/Macintosh1984.iconset"
-if os.path.exists(iconset_dir):
-    shutil.rmtree(iconset_dir)
-os.makedirs(iconset_dir, exist_ok=True)
 master_png = "/tmp/mac1984_1024.png"
-
-subprocess.run(["/tmp/gen_mac1984_icon", master_png, app_path], check=True)
-for sz in [16, 32, 128, 256, 512]:
-    subprocess.run(["sips", "-s", "format", "png", "-z", str(sz), str(sz), master_png, "--out", os.path.join(iconset_dir, f"icon_{sz}x{sz}.png")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    subprocess.run(["sips", "-s", "format", "png", "-z", str(sz*2), str(sz*2), master_png, "--out", os.path.join(iconset_dir, f"icon_{sz}x{sz}@2x.png")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-subprocess.run(["iconutil", "-c", "icns", iconset_dir, "-o", os.path.join(res_dir, "Macintosh1984.icns")], check=True)
+if os.path.exists("/tmp/gen_mac1984_icon") and os.path.exists(master_png):
+    subprocess.run(["/tmp/gen_mac1984_icon", master_png, app_path], check=True)
+    subprocess.run(["iconutil", "-c", "icns", iconset_dir, "-o", os.path.join(res_dir, "Macintosh1984.icns")], check=True)
 
 subprocess.run(["xattr", "-cr", app_path], check=False)
 subprocess.run(["codesign", "--force", "--deep", "--identifier", "com.soohyun.macintosh1984", "--sign", "-", app_path], check=False)
-subprocess.run(["/tmp/gen_mac1984_icon", master_png, app_path], check=True)
+if os.path.exists("/tmp/gen_mac1984_icon"):
+    subprocess.run(["/tmp/gen_mac1984_icon", master_png, app_path], check=True)
 
-if os.path.exists(installed_app):
-    shutil.rmtree(installed_app)
 subprocess.run(["ditto", app_path, installed_app], check=True)
-subprocess.run(["/tmp/gen_mac1984_icon", master_png, installed_app], check=True)
+if os.path.exists("/tmp/gen_mac1984_icon"):
+    subprocess.run(["/tmp/gen_mac1984_icon", master_png, installed_app], check=True)
 
 lsregister_bin = "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
 if os.path.exists(lsregister_bin):
@@ -1627,10 +1761,11 @@ subprocess.run([
     "hdiutil", "create", "-volname", "Macintosh 1984",
     "-srcfolder", stage_dir, "-ov", "-format", "UDZO", "-fs", "HFS+", dmg_path
 ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-subprocess.run(["/tmp/gen_mac1984_icon", master_png, dmg_path], check=False)
+if os.path.exists("/tmp/gen_mac1984_icon"):
+    subprocess.run(["/tmp/gen_mac1984_icon", master_png, dmg_path], check=False)
 
 shutil.rmtree(stage_dir)
-print("✅ Macintosh 1984 빌드 완료! 바탕화면의 [Macintosh1984.dmg] 및 실행된 앱을 확인하세요.")
+print("✅ [Macintosh 1984] v1.3 (OS X 10.8.5 음영/테두리 복구 + SMC 센서 패치) 완료!")
 subprocess.run(["open", installed_app])
 PYEOF
-python3 /tmp/build_macintosh1984.py
+python3 /tmp/build_macintosh_1984_v13.py
